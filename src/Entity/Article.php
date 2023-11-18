@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Post;
 use DateTimeImmutable;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -10,84 +9,83 @@ use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
-use App\Repository\PostRepository;
+use App\Repository\ArticleRepository;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Metadata\Post as ApiPlatformPost;
+use ApiPlatform\Metadata\Post;
 use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints\Length;
 
-#[ORM\Entity(repositoryClass: PostRepository::class)]
+#[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[ApiResource(
-    normalizationContext: ['groups' => ['read:Post:collection']],
-    denormalizationContext: ['groups' => ['write:Post']],
-    paginationItemsPerPage: 2,
-    paginationMaximumItemsPerPage: 2,
-    paginationClientItemsPerPage: true,
-    validationContext: ['groups' => ['create:Post']],
-    
     operations: [
         new GetCollection(),
         new Get(
-            normalizationContext: ['groups' => ['read:Post:collection', 'read:Post:item', 'read:Post']]),
+            normalizationContext: ['groups' => ['read:Article:collection', 'read:Article:item', 'read:Article']]),
         new Put(
             /* We need to define the validation context for the PUT operation
             because the validation context defined for Get will be used otherwise. */
-            validationContext: ['groups' => ['update:Post']]
+            validationContext: ['groups' => ['update:Article']]
         ),
         new Delete(),
-        new ApiPlatformPost(
-            /* validationContext: ['groups' => ['create:Post']] */ // Quickly way to define the validation context
-            validationContext: ['groups' => [Post::class, 'validationGroupsCreate']]
+        new Post(
+            /* validationContext: ['groups' => ['create:Article']] */ // Quickly way to define the validation context
+            validationContext: ['groups' => [Article::class, 'validationGroupsCreate']]
         ),
         new Patch(),
-    ]
+    ],
+    normalizationContext: ['groups' => ['read:Article:collection']],
+    denormalizationContext: ['groups' => ['write:Article']],
+    validationContext: ['groups' => ['create:Article']],
+    paginationClientItemsPerPage: true,
+    paginationItemsPerPage: 2,
+    paginationMaximumItemsPerPage: 2
 )]
 #[ApiFilter(SearchFilter::class, properties: [
     'id' => 'exact',
     'title' => 'partial',
 ])]
-class Post
+class Article
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:Post:collection'])]
+    #[Groups(['read:Article:collection'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[
-        Groups(['read:Post:collection', 'write:Post']),
-        Length(min: 5, max: 255, groups: ['create:Post']),
+        Groups(['read:Article:collection', 'write:Article']),
+        Length(min: 5, max: 255, groups: ['create:Article']),
     ]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
     #[
-        Groups(['read:Post:collection', 'write:Post']),
+        Groups(['read:Article:collection', 'write:Article']),
         Length(min: 5, max: 255),
     ]
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['read:Post:item', 'write:Post'])]
+    #[Groups(['read:Article:item', 'write:Article'])]
     private ?string $content = null;
 
     #[ORM\Column]
-    #[Groups(['read:Post:item', 'write:Post'])]
+    #[Groups(['read:Article:item', 'write:Article'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
-    #[Groups(['read:Post:item', 'write:Post'])]
+    #[Groups(['read:Article:item', 'write:Article'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'posts', cascade: ['persist'])]
+    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'Articles')]
     #[ORM\JoinColumn(nullable: false)]
     #[
-        Groups(['read:Post:item', 'write:Post']),
+        Groups(['read:Article:item', 'write:Article']),
         Valid(),
     ]
     private ?Category $category = null;
@@ -177,17 +175,17 @@ class Post
 
     // Validation groups
 
-    public static function validationGroups(self $post, string $method): array
+    public static function validationGroups(self $Article, string $method): array
     {
         if ($method === 'POST') {
-            return ['create:Post'];
+            return ['create:Article'];
         }
 
-        return ['update:Post'];
+        return ['update:Article'];
     }
 
-    public static function validationGroupsCreate(self $post): array
+    public static function validationGroupsCreate(self $Article): array
     {
-        return ['create:Post'];
+        return ['create:Article'];
     }
 }

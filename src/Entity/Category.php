@@ -17,22 +17,22 @@ class Category
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:Post'])]
+    #[Groups(['read:Article'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[
-        Groups(['read:Post', 'write:Post']),
-        Length(min: 5, max: 255, groups: ['create:Post']),
+        Groups(['read:Article', /* 'write:Article' */]),
+        Length(min: 5, max: 255, groups: ['create:Article']),
     ]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Post::class)]
-    private Collection $posts;
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Article::class)]
+    private Collection $articles;
 
     public function __construct()
     {
-        $this->posts = new ArrayCollection();
+        $this->articles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -53,29 +53,29 @@ class Category
     }
 
     /**
-     * @return Collection<int, Post>
+     * @return Collection<int, Article>
      */
-    public function getPosts(): Collection
+    public function getArticles(): Collection
     {
-        return $this->posts;
+        return $this->articles;
     }
 
-    public function addPost(Post $post): static
+    public function addArticle(Article $article): static
     {
-        if (!$this->posts->contains($post)) {
-            $this->posts->add($post);
-            $post->setCategory($this);
+        if (!$this->articles->contains($article)) {
+            $this->articles->add($article);
+            $article->setCategory($this);
         }
 
         return $this;
     }
 
-    public function removePost(Post $post): static
+    public function removeArticle(Article $article): static
     {
-        if ($this->posts->removeElement($post)) {
+        if ($this->articles->removeElement($article)) {
             // set the owning side to null (unless already changed)
-            if ($post->getCategory() === $this) {
-                $post->setCategory(null);
+            if ($article->getCategory() === $this) {
+                $article->setCategory(null);
             }
         }
 
