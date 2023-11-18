@@ -165,6 +165,15 @@ class Post
 
     // Validation groups
 
+    public static function validationGroups(self $post, string $method): array
+    {
+        if ($method === 'POST') {
+            return ['create:Post'];
+        }
+
+        return ['update:Post'];
+    }
+
     public static function validationGroupsCreate(self $post): array
     {
         return ['create:Post'];
