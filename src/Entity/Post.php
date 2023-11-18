@@ -11,7 +11,10 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\PostRepository;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\Post as ApiPlatformPost;
 use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -21,8 +24,13 @@ use Symfony\Component\Validator\Constraints\Length;
 #[ApiResource(
     normalizationContext: ['groups' => ['read:Post:collection']],
     denormalizationContext: ['groups' => ['write:Post']],
+    paginationItemsPerPage: 2,
+    paginationMaximumItemsPerPage: 2,
+    paginationClientItemsPerPage: true,
     validationContext: ['groups' => ['create:Post']],
+    
     operations: [
+        new GetCollection(),
         new Get(
             normalizationContext: ['groups' => ['read:Post:collection', 'read:Post:item', 'read:Post']]),
         new Put(
@@ -38,6 +46,10 @@ use Symfony\Component\Validator\Constraints\Length;
         new Patch(),
     ]
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'id' => 'exact',
+    'title' => 'partial',
+])]
 class Post
 {
     #[ORM\Id]
