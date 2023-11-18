@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Post;
 use DateTimeImmutable;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -12,18 +13,28 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Repository\PostRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post as ApiPlatformPost;
+use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Length;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['read:Post:collection']],
     denormalizationContext: ['groups' => ['write:Post']],
+    validationContext: ['groups' => ['create:Post']],
     operations: [
         new Get(
             normalizationContext: ['groups' => ['read:Post:collection', 'read:Post:item', 'read:Post']]),
-        new Put(),
+        new Put(
+            /* We need to define the validation context for the PUT operation
+            because the validation context defined for Get will be used otherwise. */
+            validationContext: ['groups' => ['update:Post']]
+        ),
         new Delete(),
-        new ApiPlatformPost(),
+        new ApiPlatformPost(
+            /* validationContext: ['groups' => ['create:Post']] */ // Quickly way to define the validation context
+            validationContext: ['groups' => [Post::class, 'validationGroupsCreate']]
+        ),
         new Patch(),
     ]
 )]
@@ -36,11 +47,17 @@ class Post
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Post:collection', 'write:Post'])]
+    #[
+        Groups(['read:Post:collection', 'write:Post']),
+        Length(min: 5, max: 255, groups: ['create:Post']),
+    ]
     private ?string $title = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Post:collection', 'write:Post'])]
+    #[
+        Groups(['read:Post:collection', 'write:Post']),
+        Length(min: 5, max: 255),
+    ]
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -55,9 +72,12 @@ class Post
     #[Groups(['read:Post:item', 'write:Post'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'posts')]
+    #[ORM\ManyToOne(inversedBy: 'posts', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:Post:item', 'write:Post'])]
+    #[
+        Groups(['read:Post:item', 'write:Post']),
+        Valid(),
+    ]
     private ?Category $category = null;
 
     public function __construct()
@@ -141,5 +161,12 @@ class Post
         $this->category = $category;
 
         return $this;
+    }
+
+    // Validation groups
+
+    public static function validationGroupsCreate(self $post): array
+    {
+        return ['create:Post'];
     }
 }
